@@ -14,5 +14,8 @@
                 "https://pasadena.instructure.com/*"
             ]
         }
+    ],
+    "permissions": [
+        "storage"
     ]
 }
