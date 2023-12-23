@@ -1,20 +1,30 @@
-let pins = [];
+let thisCoursePins = [];
 let pinsModule;
+
+let thisCourse = String(document.location.pathname.split("/")[2]);
+
+console.log(`Current course: ${thisCourse}`);
 
 async function mainFunc() {
     let moduleItems = document.querySelectorAll("li.context_module_item:not(#context_module_item_blank)");
     console.log(`${moduleItems.length} Module Items!!`);
 
     // grab pins
-    await chrome.storage.local.get("pins").then((result) => {
-        pins = result.pins;
-        console.log(pins);
+    await chrome.storage.local.get(thisCourse).then(async (result) => {
+        thisCoursePins = result[thisCourse];
+        console.log(`Pins: ${thisCoursePins}`);
+        if (!thisCoursePins) {
+            thisCoursePins = [];
+            let tmp = {};
+            tmp[thisCourse] = thisCoursePins;
+            await chrome.storage.local.set(tmp).then(() => {
+                console.log("Initialized pins for this course.");
+            });
+        }
     });
 
-    if (pins != []) {
-        pinsModule = createPinsModule()
-        moveToTop(pinsModule);
-    }
+    pinsModule = createPinsModule()
+    moveToTop(pinsModule);
 
     // add pin checkbox to each module item
     moduleItems.forEach(listItem => {
@@ -22,32 +32,35 @@ async function mainFunc() {
         let pinCheckbox = document.createElement("input");
         pinCheckbox.type = "checkbox";
         pinCheckbox.addEventListener("click", async () => {
-            await chrome.storage.local.get("pins").then((result) => {
+            await chrome.storage.local.get(thisCourse).then((result) => {
                 console.log("Value currently is " + JSON.stringify(result));
-                pins = result.pins
+                thisCoursePins = result[thisCourse];
             });
-            if (pinCheckbox.checked && !pins.includes(listItem.id)) {
-                pins.push(listItem.id);
+            if (pinCheckbox.checked && !thisCoursePins.includes(listItem.id)) {
+                thisCoursePins.push(listItem.id);
             }
-            else if (!pinCheckbox.checked && pins.includes(listItem.id)) {
-                pins.pop(pins.indexOf(listItem.id));
+            else if (!pinCheckbox.checked && thisCoursePins.includes(listItem.id)) {
+                thisCoursePins.pop(thisCoursePins.indexOf(listItem.id));
             }
-            await chrome.storage.local.set({ "pins": pins }).then(() => {
+            let tmp = {};
+            tmp[thisCourse] = thisCoursePins;
+            await chrome.storage.local.set(tmp).then(() => {
                 console.log("Updated pins");
+                console.log(thisCoursePins);
             });
-            await chrome.storage.local.get("pins").then((result) => {
+            await chrome.storage.local.get(thisCourse).then((result) => {
                 console.log("Value currently is " + JSON.stringify(result));
             });
-            updatePinsModule(pins);
+            updatePinsModule(thisCoursePins);
         });
-        if (pins.includes(listItem.id)) {
+        if (thisCoursePins.includes(listItem.id)) {
             pinCheckbox.checked = true;
             console.log("checkd");
         }
         containerDiv.appendChild(pinCheckbox);
     });
 
-    updatePinsModule(pins);
+    updatePinsModule(thisCoursePins);
 
 }
 
@@ -79,12 +92,36 @@ function createPinsModule() {
     return pinsModule;
 }
 
-function updatePinsModule(pins) {
+function updatePinsModule(thisCoursePins) {
     let contentDiv = pinsModule.querySelector("div.content");
     contentDiv.innerHTML = "";
-    pins.forEach(listItemId => {
+    thisCoursePins.forEach(listItemId => {
         let listItem = document.querySelector(`#${listItemId}`);
-        contentDiv.appendChild(listItem.cloneNode(true));
+        let listItemInPinsModule = listItem.cloneNode(true);
+        let listItemInPinsModuleCheckbox = listItemInPinsModule.querySelector("input[type='checkbox']");
+        listItemInPinsModuleCheckbox.addEventListener("click", async () => {
+            await chrome.storage.local.get(thisCourse).then((result) => {
+                console.log("Value currently is " + JSON.stringify(result));
+                thisCoursePins = result[thisCourse]
+            });
+            if (listItemInPinsModuleCheckbox.checked && !thisCoursePins.includes(listItem.id)) {
+                thisCoursePins.push(listItem.id);
+            }
+            else if (!listItemInPinsModuleCheckbox.checked && thisCoursePins.includes(listItem.id)) {
+                thisCoursePins.pop(thisCoursePins.indexOf(listItem.id));
+                document.querySelectorAll(`#${listItem.id} input[type='checkbox']`)[1].checked = false;
+            }
+            let tmp = {};
+            tmp[thisCourse] = thisCoursePins;
+            await chrome.storage.local.set(tmp).then(() => {
+                console.log("Updated pins");
+            });
+            await chrome.storage.local.get(thisCourse).then((result) => {
+                console.log("Value currently is " + JSON.stringify(result));
+            });
+            updatePinsModule(thisCoursePins);
+        });
+        contentDiv.appendChild(listItemInPinsModule);
     });
 }
 

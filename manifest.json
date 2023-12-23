@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
-    "name": "Hello Extensions",
-    "description": "Base Level Extension",
+    "name": "Canvas Pins Extension",
+    "description": "Allows you to pin module items in Canvas!",
     "version": "1.0",
     "action": {
         "default_popup": "hello.html",
@@ -11,7 +11,7 @@
         {
             "js": ["scripts/module-pins.js"],
             "matches": [
-                "https://pasadena.instructure.com/*"
+                "https://pasadena.instructure.com/courses/*"
             ]
         }
     ],
