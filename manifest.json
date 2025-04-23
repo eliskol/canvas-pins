@@ -11,7 +11,7 @@
         {
             "js": ["scripts/module-pins.js"],
             "matches": [
-                "https://pasadena.instructure.com/courses/*"
+                "https://*.instructure.com/courses/*"
             ]
         }
     ],
